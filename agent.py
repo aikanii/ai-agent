@@ -1,33 +1,24 @@
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_groq import ChatGroq
-from langgraph.checkpoint.memory import InMemorySaver
 
+# load your GROQ_API_KEY from the .env file
 load_dotenv()
 
-model = ChatGroq(model="openai/gpt-oss-120b")  # was llama-3.3-70b-versatile — deprecated
+# the brain: a free groq model
+model = ChatGroq(model="openai/gpt-oss-120b")
 
-# the checkpointer saves conversation state between calls
+# the agent: model + a system prompt telling it how to behave
 agent = create_agent(
     model=model,
     tools=[],
     system_prompt="You are a helpful assistant. Be concise and accurate.",
-    checkpointer=InMemorySaver(),
 )
 
-# a thread_id labels the conversation — same id = same memory
-config = {"configurable": {"thread_id": "chat-1"}}
-
-# first message
-r1 = agent.invoke(
-    {"messages": [{"role": "user", "content": "hi! my name is m0h."}]},
-    config,
+# ask it something
+result = agent.invoke(
+    {"messages": [{"role": "user", "content": "explain what an AI agent is in two sentences."}]}
 )
-print(r1["messages"][-1].content)
 
-# second message — same thread_id, so it remembers
-r2 = agent.invoke(
-    {"messages": [{"role": "user", "content": "what's my name?"}]},
-    config,
-)
-print(r2["messages"][-1].content)
+# print the agent's reply
+print(result["messages"][-1].content)
