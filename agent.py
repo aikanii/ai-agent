@@ -1,24 +1,31 @@
 from dotenv import load_dotenv
 from langchain.agents import create_agent
+from langchain.tools import tool
 from langchain_groq import ChatGroq
+from langchain_community.tools import DuckDuckGoSearchRun
 
-# load your GROQ_API_KEY from the .env file
 load_dotenv()
 
-# the brain: a free groq model
-model = ChatGroq(model="llama-3.3-70b-versatile")
+llm = ChatGroq(model="openai/gpt-oss-120b")  # or "openai/gpt-oss-20b" for a smaller/faster option
 
-# the agent: model + a system prompt telling it how to behave
+# tool 1 — web search (prebuilt, free, no key)
+search = DuckDuckGoSearchRun()
+
+# tool 2 — a function you wrote yourself
+@tool
+def word_count(text: str) -> int:
+    """Count how many words are in a piece of text."""
+    return len(text.split())
+
+# hand both tools to the agent
 agent = create_agent(
-    model=model,
-    tools=[],
-    system_prompt="You are a helpful assistant. Be concise and accurate.",
+    model=llm,   # was model=model
+    tools=[search, word_count],
+    system_prompt="You are a helpful assistant. Use your tools when they help answer accurately.",
 )
 
-# ask it something
 result = agent.invoke(
-    {"messages": [{"role": "user", "content": "explain what an AI agent is in two sentences."}]}
+    {"messages": [{"role": "user", "content": "search for the latest langchain version, then tell me how many words your answer is."}]}
 )
 
-# print the agent's reply
 print(result["messages"][-1].content)
